@@ -3,118 +3,118 @@ import sys
 import shutil
 import subprocess
 
-# Secure dependency validation checks
-try:
-    import yaml
-except ImportError:
-    print("[*] Dependency missing. Provisioning PyYAML automatically...")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "pyyaml"])
-    import yaml
+def log(phase, message):
+    print(f"\n[PHASE: {phase}] {message}")
+    print("-" * 60)
 
-def log_phase(name):
-    print(f"\n========================================================")
-    print(f" >>> PHASE: {name}")
-    print(f"========================================================")
-
-def detect_environment():
-    if os.path.exists("/data/data/com.termux"):
-        return "termux"
-    elif os.path.exists("/usr/bin/apt") or os.path.exists("/etc/debian_version"):
-        return "ubuntu"
-    else:
-        return "unknown"
-
-def setup_dependencies(env):
-    log_phase("A - Dependency Provisioning & Architecture Selection")
-    print(f"[*] Target runtime context evaluated: System={env.upper()}")
-    
-    if env == "termux":
-        cmds = [
-            "pkg update -y",
-            "pkg install git clang make python pkg-config libandroid-support SDL2 SDL2-image openjdk-17 -y"
-        ]
-    elif env == "ubuntu":
-        cmds = [
-            "sudo apt-get update -y",
-            "sudo apt-get install -y git build-essential clang make python3 pkg-config libsdl2-dev libsdl2-image-dev openjdk-17-jdk gradle"
-        ]
-    else:
-        print("[!] Unsupported operating environment. Proceeding with caution...")
-        return
-
-    for cmd in cmds:
-        print(f"[*] Executing pipeline command: {cmd}")
-        subprocess.run(cmd, shell=True, check=True)
-
-def verify_workspace_assets(rom_name):
-    print(f"[*] Searching for asset baseline dependency: '{rom_name}'")
-    if not os.path.exists(rom_name):
-        print(f"\n[X] CRITICAL ERROR: Reference asset verification failed!")
-        print(f"    You must supply a valid Super Mario 64 US ROM to extract assets.")
-        print(f"    Drop '{rom_name}' into this directory and rerun.\n")
+def main():
+    # ---------------------------------------------------------
+    # PHASE A: Host OS Dependency Provisioning
+    # ---------------------------------------------------------
+    log("A", "Installing System & OpenGL Libraries...")
+    try:
+        # Added libglu1-mesa-dev to fix the fatal missing GL/glu.h header error
+        subprocess.run([
+            "sudo", "apt-get", "update", "-y"
+        ], check=True)
+        subprocess.run([
+            "sudo", "apt-get", "install", "-y", 
+            "build-essential", "clang", "make", "pkg-config", 
+            "libsdl2-dev", "libsdl2-image-dev", "libglu1-mesa-dev"
+        ], check=True)
+        print("[✓] Host dependencies successfully provisioned.")
+    except subprocess.CalledProcessError as e:
+        print(f"[X] Dependency installation failed: {e}")
         sys.exit(1)
-    print(f"[✓] Asset token verified: Located path target -> {os.path.abspath(rom_name)}")
 
-def clone_repository(url):
-    target_dir = "Saturn_Source"
-    if os.path.exists(target_dir):
-        print(f"[*] Source infrastructure folder '{target_dir}' discovered. Cleaning dynamic caches...")
-        return target_dir
-    print(f"[*] Fetching target codebase repository: {url}")
-    subprocess.run(["git", "clone", url, target_dir], check=True)
-    return target_dir
+    # ---------------------------------------------------------
+    # PHASE B: Automated Source Code Transformation Engine
+    # ---------------------------------------------------------
+    log("B", "Patching Engine Code Context Arrays...")
 
-def run_patch_engine(repo_path, patches):
-    log_phase("B - Code Transformation & Native Architecture Mapping")
-    for index, patch in enumerate(patches):
-        action = patch.get("action")
-        target = os.path.join(repo_path, patch.get("target"))
-        print(f"[*] Processing patch index [{index}] -> Action: {action} on Target: {patch.get('target')}")
+    # Fix 1: Swap GLX Display Targets to Android/SDL2 Context Hooks
+    t1 = "src/pc/gfx/gfx_window_manager_api.h"
+    if os.path.exists(t1):
+        with open(t1, "r", encoding="utf-8", errors="ignore") as f: data = f.read()
+        data = data.replace("#define GFX_API_GLX 1", "#define GFX_API_SDL2 1")
+        with open(t1, "w", encoding="utf-8") as f: f.write(data)
+        print("[✓] Patched window manager API to force SDL2.")
 
-        if action == "replace_string":
-            if not os.path.exists(target):
-                print(f"[!] Warning: File target not matching repository tree structure: {target}")
-                continue
-            with open(target, "r", encoding="utf-8", errors="ignore") as f:
-                data = f.read()
-            
-            find_val = patch.get("find")
-            replace_val = patch.get("replace")
-            
-            if find_val in data:
-                data = data.replace(find_val, replace_val)
-                with open(target, "w", encoding="utf-8") as f:
-                    f.write(data)
-                print(f"    [✓] Transformation mapping injected successfully.")
-            else:
-                print(f"    [!] Target signature token omitted (already patched or absent).")
+    # Fix 2: Force dynamic mobile resolution scaling matrix
+    t2 = "src/pc/gfx/gfx_sdl2.c"
+    if os.path.exists(t2):
+        with open(t2, "r", encoding="utf-8", errors="ignore") as f: data = f.read()
+        find_str = 'window = SDL_CreateWindow("Saturn Studio", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, window_flags);'
+        replace_str = 'SDL_DisplayMode dm;\n    SDL_GetCurrentDisplayMode(0, &dm);\n    window = SDL_CreateWindow("Saturn Studio", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, dm.w, dm.h, window_flags | SDL_WINDOW_FULLSCREEN);'
+        if find_str in data:
+            data = data.replace(find_str, replace_str)
+            with open(t2, "w", encoding="utf-8") as f: f.write(data)
+            print("[✓] Screen aspect configurations mapped to full screen mobile arrays.")
 
-        elif action == "create_file":
-            os.makedirs(os.path.dirname(target), exist_ok=True)
-            with open(target, "w", encoding="utf-8") as f:
-                f.write(patch.get("content", ""))
-            print(f"    [✓] Dynamic file resource compiled down to target.")
+    # Fix 3: Inject On-Screen Virtual Touch Interface directly into the controller loop
+    t3 = "src/pc/controller/controller_sdl.c"
+    if os.path.exists(t3):
+        with open(t3, "r", encoding="utf-8", errors="ignore") as f: data = f.read()
+        touch_code = """SDL_PumpEvents();
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_FINGERDOWN || event.type == SDL_FINGERMOTION || event.type == SDL_FINGERUP) {
+            float tx = event.tfinger.x; float ty = event.tfinger.y;
+            int is_down = (event.type != SDL_FINGERUP);
+            if (tx > 0.05 && tx < 0.25 && ty > 0.6 && ty < 0.9) {
+                float cx = tx - 0.15; float cy = ty - 0.75;
+                if (is_down) {
+                    if (cy < -0.04) pad->button |= 0x0008;
+                    if (cy > 0.04)  pad->button |= 0x0004;
+                    if (cx < -0.04) pad->button |= 0x0002;
+                    if (cx > 0.04)  pad->button |= 0x0001;
+                }
+            }
+            if (tx > 0.75 && tx < 0.90 && ty > 0.65 && ty < 0.85) { if (is_down) pad->button |= 0x8000; }
+            if (tx > 0.85 && tx < 0.98 && ty > 0.50 && ty < 0.70) { if (is_down) pad->button |= 0x4000; }
+            if (tx > 0.02 && tx < 0.15 && ty > 0.10 && ty < 0.25) { if (is_down) pad->button |= 0x2000; }
+            if (tx > 0.40 && tx < 0.60 && ty > 0.02 && ty < 0.15) { if (is_down) pad->button |= 0x1000; }
+        }
+    }"""
+        if "SDL_PumpEvents();" in data:
+            data = data.replace("SDL_PumpEvents();", touch_code)
+            with open(t3, "w", encoding="utf-8") as f: f.write(data)
+            print("[✓] Virtual touch input matrix structural overlays successfully bound.")
 
-def structuralize_android_wrapper(repo_path, config):
-    log_phase("C.1 - Android Project Structure Generator")
-    
-    # Establish complete project directories
-    base_app_dir = os.path.join(repo_path, "android_wrapper")
-    jni_dir = os.path.join(base_app_dir, config["android_target"]["jni_dir"])
-    res_dir = os.path.join(base_app_dir, "app/src/main/res/values")
-    
-    os.makedirs(jni_dir, exist_ok=True)
-    os.makedirs(res_dir, exist_ok=True)
+    # Fix 4: Address file read system layer redirection targets for APK asset delivery streams
+    t4 = "src/pc/fs/fs.c"
+    if os.path.exists(t4):
+        with open(t4, "r", encoding="utf-8", errors="ignore") as f: data = f.read()
+        data = data.replace('FILE *f = fopen(path, "rb");', 'SDL_RWops *rw = SDL_RWFromFile(path, "rb");\n    if (!rw) return NULL;')
+        with open(t4, "w", encoding="utf-8") as f: f.write(data)
+        print("[✓] Rerouted native open routines to internal APK stream operations.")
 
-    # 1. Generate Manifest
-    manifest_file = os.path.join(base_app_dir, config["android_target"]["manifest_path"])
-    os.makedirs(os.path.dirname(manifest_file), exist_ok=True)
-    with open(manifest_file, "w", encoding="utf-8") as f:
+    # Fix 5: Resolve format-security warnings causing failure states inside the saturn_imgui translation code blocks
+    t5 = "src/saturn/imgui/saturn_imgui.cpp"
+    if os.path.exists(t5):
+        with open(t5, "r", encoding="utf-8", errors="ignore") as f: data = f.read()
+        data = data.replace('ImGui::Text(buf);', 'ImGui::Text("%s", buf);')
+        data = data.replace('ImGui::Text(anim_name.c_str());', 'ImGui::Text("%s", anim_name.c_str());')
+        data = data.replace('ImGui::Text(("Speed: " + std::string(buf)).c_str());', 'ImGui::Text("%s", ("Speed: " + std::string(buf)).c_str());')
+        data = data.replace('ImGui::Text((current_model.Expressions[i].Textures[current_model.Expressions[i].CurrentIndex].FileName + " - " + current_model.Expressions[i].Name).c_str());', 'ImGui::Text("%s", (current_model.Expressions[i].Textures[current_model.Expressions[i].CurrentIndex].FileName + " - " + current_model.Expressions[i].Name).c_str());')
+        with open(t5, "w", encoding="utf-8") as f: f.write(data)
+        print("[✓] Cleaned dynamic string literals syntax bugs inside Saturn ImGui definitions.")
+
+    # ---------------------------------------------------------
+    # PHASE C: Android Structural Project Packaging Setup
+    # ---------------------------------------------------------
+    log("C", "Structuralizing Android Packaging Wrappers...")
+    os.makedirs("android_wrapper/app/src/main/jni", exist_ok=True)
+    os.makedirs("android_wrapper/app/src/main/res/values", exist_ok=True)
+    os.makedirs("android_wrapper/app/src/main/assets", exist_ok=True)
+
+    with open("android_wrapper/app/src/main/AndroidManifest.xml", "w", encoding="utf-8") as f:
         f.write('''<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://android.com" package="com.studio.saturn">
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <application android:label="Saturn Engine" android:hasCode="true" android:allowBackup="false">
-        <activity android:name="org.libsdl.app.SDLActivity" android:exported="true" android:screenOrientation="landscape">
+        <activity android:name="org.libsdl.app.SDLActivity" android:exported="true" android:screenOrientation="landscape" android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -123,13 +123,8 @@ def structuralize_android_wrapper(repo_path, config):
     </application>
 </manifest>''')
 
-    # 2. Generate Build Gradle
-    gradle_file = os.path.join(base_app_dir, config["android_target"]["gradle_path"])
-    os.makedirs(os.path.dirname(gradle_file), exist_ok=True)
-    with open(gradle_file, "w", encoding="utf-8") as f:
-        f.write('''plugins {
-    id 'com.android.application'
-}
+    with open("android_wrapper/app/src/main/build.gradle", "w", encoding="utf-8") as f:
+        f.write('''plugins { id 'com.android.application' }
 android {
     compileSdk 33
     defaultConfig {
@@ -140,92 +135,26 @@ android {
         versionName "1.0"
         ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }
     }
-    buildTypes {
-        release {
-            minifyEnabled false
-        }
-    }
-    externalNativeBuild {
-        ndkBuild {
-            path "src/main/jni/Android.mk"
-        }
-    }
+    externalNativeBuild { ndkBuild { path "src/main/jni/Android.mk" } }
 }''')
 
-    # 3. Generate Settings Gradle
-    settings_file = os.path.join(base_app_dir, config["android_target"]["settings_path"])
-    with open(settings_file, "w", encoding="utf-8") as f:
+    with open("android_wrapper/settings.gradle", "w", encoding="utf-8") as f:
         f.write("include ':app'\n")
 
-    # 4. Generate Strings Value Resource XML
-    with open(os.path.join(res_dir, "strings.xml"), "w", encoding="utf-8") as f:
+    with open("android_wrapper/app/src/main/res/values/strings.xml", "w", encoding="utf-8") as f:
         f.write('<resources><string name="app_name">Saturn Engine</string></resources>')
 
-    print("[✓] Scaffolding tree built out. Native links mapped to pipeline assets.")
-    return base_app_dir
+    with open("android_wrapper/app/src/main/jni/Android.mk", "w", encoding="utf-8") as f:
+        f.write('''LOCAL_PATH := $(call my-dir)
+include $(CLEAR_VARS)
+LOCAL_MODULE := main
+LOCAL_SRC_FILES := $(wildcard $(LOCAL_PATH)/../../../../src/**/*.c) \\
+                   $(wildcard $(LOCAL_PATH)/../../../../src/**/*.cpp)
+LOCAL_LDLIBS := -lGLESv2 -lEGL -llog -landroid -lGLU
+LOCAL_SHARED_LIBRARIES := SDL2 SDL2_image
+include $(BUILD_SHARED_LIBRARY)''')
 
-def package_and_compile(repo_path, wrapper_path, rom_name):
-    log_phase("C.2 - Native Cross-Compilation & Gradle Build Pipeline")
-    
-    # Relocate raw file dependencies directly inside targeted source location
-    dest_rom_path = os.path.join(repo_path, rom_name)
-    if not os.path.exists(dest_rom_path):
-        shutil.copy(rom_name, dest_rom_path)
-    
-    original_cwd = os.getcwd()
-    os.chdir(repo_path)
-    
-    try:
-        print("[*] Generating game source native binary dependencies via system make blocks...")
-        # Step 1: Run native resource compilation
-        subprocess.run(["make", "TARGET_ANDROID=1", "clean"], check=True)
-        # We run the build asset extractor engine step natively
-        subprocess.run(["make", "TARGET_ANDROID=1", "-j4"], check=True)
-        
-        # Step 2: Switch execution target down into our wrapper stack context to run gradle targets
-        os.chdir(os.path.join(original_cwd, wrapper_path))
-        print("[*] Running Gradle asset packaging system framework...")
-        
-        # Check for local gradle setup or execute global system wrapper variables
-        gradle_cmd = "./gradlew" if os.path.exists("gradlew") else "gradle"
-        subprocess.run([gradle_cmd, "assembleDebug"], check=True)
-        
-        # Step 3: Discover target outputs context and sweep back home
-        output_apk = os.path.join("app/build/outputs/apk/debug/app-debug.apk")
-        if os.path.exists(output_apk):
-            final_target = os.path.join(original_cwd, "Saturn_Engine_Target.apk")
-            shutil.copy(output_apk, final_target)
-            print(f"\n[✓][✓][✓] SUCCESS Pipeline execution target hit!")
-            print(f"          Output package written to: {final_target}\n")
-        else:
-            print("[X] Pipeline execution failure: Compilation occurred but binary signature skipped output targets.")
-            
-    except subprocess.CalledProcessError as err:
-        print(f"[X] Execution failed inside internal sub-process block. Code details: {err}")
-        sys.exit(1)
-    finally:
-        os.chdir(original_cwd)
-
-def main():
-    if not os.path.exists("build_config.yml"):
-        print("[X] Configuration sequence failure: 'build_config.yml' manifest must occupy the running workspace.")
-        sys.exit(1)
-
-    with open("build_config.yml", "r", encoding="utf-8") as file_stream:
-        config = yaml.safe_load(file_stream)
-
-    env_type = detect_environment()
-    setup_dependencies(env_type)
-    verify_workspace_assets(config["project"]["rom_name"])
-    
-    repo_directory = clone_repository(config["project"]["repo_url"])
-    
-    # Process patches
-    run_patch_engine(repo_directory, config["patch_sequence"])
-    
-    # Construct runtime directories and compile components
-    wrapper_path = structuralize_android_wrapper(repo_directory, config)
-    package_and_compile(repo_directory, wrapper_path, config["project"]["rom_name"])
+    print("[✓] Packaging templates generated successfully.")
 
 if __name__ == "__main__":
     main()
