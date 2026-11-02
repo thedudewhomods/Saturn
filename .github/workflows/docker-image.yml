@@ -1,4 +1,4 @@
-name: Build Android Saturn APK (Legacy Branch Only)
+name: Build Android Saturn APK (Legacy Branch)
 
 on:
   push:
@@ -25,132 +25,15 @@ jobs:
 
     - name: Configure Android SDK and NDK Environments Manually
       run: |
-        # Use the high-performance SDK pre-installed on the runner directly
         echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
         echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
-        
-        # Locate the newest installed NDK version inside the runner image dynamically
         NDK_PATH=$(ls -d /usr/local/lib/android/sdk/ndk/* | sort -V | tail -n 1)
         echo "NDK_ROOT=$NDK_PATH" >> $GITHUB_ENV
         echo "PATH=$NDK_PATH:/usr/local/lib/android/sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
 
-    - name: Install Native Host Compiler Utilities
+    - name: Run Pipeline File Engine Patches & Install Host Dependencies
       run: |
-        sudo apt-get update -y
-        sudo apt-get install -y build-essential clang make pkg-config libsdl2-dev libsdl2-image-dev
-
-    - name: Execute Pipeline Code Transformation Patches
-      run: |
-        python3 -c '
-        import os
-        
-        # Phase 1: Force Native Audio/Video Framework and full screen aspect matrices
-        target1 = "src/pc/gfx/gfx_window_manager_api.h"
-        if os.path.exists(target1):
-            with open(target1, "r") as f: data = f.read()
-            data = data.replace("#define GFX_API_GLX 1", "#define GFX_API_SDL2 1")
-            with open(target1, "w") as f: f.write(data)
-
-        target2 = "src/pc/gfx/gfx_sdl2.c"
-        if os.path.exists(target2):
-            with open(target2, "r") as f: data = f.read()
-            find_str = "window = SDL_CreateWindow(\"Saturn Studio\", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, window_flags);"
-            replace_str = "SDL_DisplayMode dm;\nSDL_GetCurrentDisplayMode(0, &dm);\nwindow = SDL_CreateWindow(\"Saturn Studio\", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, dm.w, dm.h, window_flags | SDL_WINDOW_FULLSCREEN);"
-            data = data.replace(find_str, replace_str)
-            with open(target2, "w") as f: f.write(data)
-
-        # Phase 2: Inject On-Screen Virtual Touch Control Matrix into Input Engine
-        target3 = "src/pc/controller/controller_sdl.c"
-        if os.path.exists(target3):
-            with open(target3, "r") as f: data = f.read()
-            touch_code = """SDL_PumpEvents();
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_FINGERDOWN || event.type == SDL_FINGERMOTION || event.type == SDL_FINGERUP) {
-                float tx = event.tfinger.x; float ty = event.tfinger.y;
-                int is_down = (event.type != SDL_FINGERUP);
-                if (tx > 0.05 && tx < 0.25 && ty > 0.6 && ty < 0.9) {
-                    float cx = tx - 0.15; float cy = ty - 0.75;
-                    if (is_down) {
-                        if (cy < -0.04) pad->button |= 0x0008;
-                        if (cy > 0.04)  pad->button |= 0x0004;
-                        if (cx < -0.04) pad->button |= 0x0002;
-                        if (cx > 0.04)  pad->button |= 0x0001;
-                    }
-                }
-                if (tx > 0.75 && tx < 0.90 && ty > 0.65 && ty < 0.85) { if (is_down) pad->button |= 0x8000; }
-                if (tx > 0.85 && tx < 0.98 && ty > 0.50 && ty < 0.70) { if (is_down) pad->button |= 0x4000; }
-                if (tx > 0.02 && tx < 0.15 && ty > 0.10 && ty < 0.25) { if (is_down) pad->button |= 0x2000; }
-                if (tx > 0.40 && tx < 0.60 && ty > 0.02 && ty < 0.15) { if (is_down) pad->button |= 0x1000; }
-            }
-        }"""
-            data = data.replace("SDL_PumpEvents();", touch_code)
-            with open(target3, "w") as f: f.write(data)
-
-        # Phase 3: Reroute local files loops into APK AAssetManager paths
-        target4 = "src/pc/fs/fs.c"
-        if os.path.exists(target4):
-            with open(target4, "r") as f: data = f.read()
-            data = data.replace("FILE *f = fopen(path, \"rb\");", "SDL_RWops *rw = SDL_RWFromFile(path, \"rb\");\nif (!rw) return NULL;")
-            with open(target4, "w") as f: f.write(data)
-        print("[✓] Patches successfully injected via workflow line execution engine.")
-        '
-
-    - name: Generate Android App Wrapper Templates & Activity Hooks
-      run: |
-        mkdir -p android_wrapper/app/src/main/jni
-        mkdir -p android_wrapper/app/src/main/res/values
-        mkdir -p android_wrapper/app/src/main/assets
-        
-        cat << 'EOF' > android_wrapper/app/src/main/AndroidManifest.xml
-        <?xml version="1.0" encoding="utf-8"?>
-        <manifest xmlns:android="http://android.com" package="com.studio.saturn">
-            <uses-feature android:glEsVersion="0x00020000" android:required="true" />
-            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-            <application android:label="Saturn Engine" android:hasCode="true" android:allowBackup="false">
-                <activity android:name="org.libsdl.app.SDLActivity" android:exported="true" android:screenOrientation="landscape" android:configChanges="orientation|keyboardHidden|screenSize">
-                    <intent-filter>
-                        <action android:name="android.intent.action.MAIN" />
-                        <category android:name="android.intent.category.LAUNCHER" />
-                    </intent-filter>
-                </activity>
-            </application>
-        </manifest>
-        EOF
-
-        cat << 'EOF' > android_wrapper/app/src/main/build.gradle
-        plugins { id 'com.android.application' }
-        android {
-            compileSdk 33
-            defaultConfig {
-                applicationId "com.studio.saturn"
-                minSdk 21
-                targetSdk 33
-                versionCode 1
-                versionName "1.0"
-                ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }
-            }
-            externalNativeBuild { ndkBuild { path "src/main/jni/Android.mk" } }
-        }
-        EOF
-
-        cat << 'EOF' > android_wrapper/settings.gradle
-        include ':app'
-        EOF
-
-        cat << 'EOF' > android_wrapper/app/src/main/res/values/strings.xml
-        <resources><string name="app_name">Saturn Engine</string></resources>
-        EOF
-
-        cat << 'EOF' > android_wrapper/app/src/main/jni/Android.mk
-        LOCAL_PATH := $(call my-dir)
-        include $(CLEAR_VARS)
-        LOCAL_MODULE := main
-        LOCAL_SRC_FILES := $(wildcard $(LOCAL_PATH)/../../../../src/**/*.c)
-        LOCAL_LDLIBS := -lGLESv2 -lEGL -llog -landroid
-        LOCAL_SHARED_LIBRARIES := SDL2 SDL2_image
-        include $(BUILD_SHARED_LIBRARY)
-        EOF
+        python3 generate_pipeline.py
 
     - name: Check and Secure Workspace Asset Baseline
       run: |
@@ -161,9 +44,10 @@ jobs:
 
     - name: Compile Native Shared Libraries via Android NDK Build Hooks
       run: |
+        # Use target options pointing native arrays to mobile
         make TARGET_ANDROID=1 -j4
         
-        # Route compiled asset assets out of the customized us_mobile pipeline down into gradle wrapper resources
+        # Pull generated graphics files downstream into APK context structures
         if [ -d "build/us_mobile/res" ]; then
           cp -r build/us_mobile/res android_wrapper/app/src/main/assets/
         elif [ -d "build/us_pc/res" ]; then
