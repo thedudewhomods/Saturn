@@ -1,4 +1,4 @@
-name: Build Android Saturn APK (Legacy Branch)
+name: Build Android Saturn APK (Legacy Branch Only)
 
 on:
   push:
@@ -23,6 +23,12 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
+    # STEP MOVED HERE: Executes first to install dependencies and apply code patches
+    - name: Run Pipeline File Engine Patches & Install Host Dependencies
+      run: |
+        python3 generate_pipeline.py
+
+    # STEP MOVED HERE: Executes right after your pipeline file operations complete
     - name: Configure Android SDK and NDK Environments Manually
       run: |
         echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
@@ -30,10 +36,6 @@ jobs:
         NDK_PATH=$(ls -d /usr/local/lib/android/sdk/ndk/* | sort -V | tail -n 1)
         echo "NDK_ROOT=$NDK_PATH" >> $GITHUB_ENV
         echo "PATH=$NDK_PATH:/usr/local/lib/android/sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
-
-    - name: Run Pipeline File Engine Patches & Install Host Dependencies
-      run: |
-        python3 generate_pipeline.py
 
     - name: Check and Secure Workspace Asset Baseline
       run: |
@@ -44,10 +46,9 @@ jobs:
 
     - name: Compile Native Shared Libraries via Android NDK Build Hooks
       run: |
-        # Use target options pointing native arrays to mobile
         make TARGET_ANDROID=1 -j4
         
-        # Pull generated graphics files downstream into APK context structures
+        # Route compiled asset assets out of the customized us_mobile pipeline down into gradle wrapper resources
         if [ -d "build/us_mobile/res" ]; then
           cp -r build/us_mobile/res android_wrapper/app/src/main/assets/
         elif [ -d "build/us_pc/res" ]; then
