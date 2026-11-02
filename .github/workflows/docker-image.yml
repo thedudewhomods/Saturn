@@ -23,12 +23,10 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    # STEP MOVED HERE: Executes first to install dependencies and apply code patches
     - name: Run Pipeline File Engine Patches & Install Host Dependencies
       run: |
         python3 generate_pipeline.py
 
-    # STEP MOVED HERE: Executes right after your pipeline file operations complete
     - name: Configure Android SDK and NDK Environments Manually
       run: |
         echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
@@ -59,7 +57,8 @@ jobs:
       run: |
         cd android_wrapper
         gradle wrapper
-        ./gradlew assembleDebug
+        # FIXED: Explicitly target the subproject assembly path module
+        ./gradlew :app:assembleDebug
 
     - name: Export Working Signed Android Binary APK
       uses: actions/upload-artifact@v4
