@@ -2,10 +2,10 @@ name: Build Android Saturn APK (Legacy Branch Only)
 
 on:
   push:
-    branches: [ "legacy" ]  # Triggers when code is pushed directly to the legacy branch
+    branches: [ "legacy" ]
   pull_request:
-    branches: [ "legacy" ]  # Triggers when a pull request targets the legacy branch
-  workflow_dispatch:        # Allows you to click "Run workflow" manually inside GitHub
+    branches: [ "legacy" ]
+  workflow_dispatch:
 
 jobs:
   build-apk:
@@ -15,7 +15,7 @@ jobs:
     - name: Check out repository source code
       uses: actions/checkout@v4
       with:
-        ref: 'legacy' # Expressly targets and loads the legacy branch files
+        ref: 'legacy'
 
     - name: Set up Java Development Kit env
       uses: actions/setup-java@v4
@@ -23,15 +23,16 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Set up Android SDK Manager Environment Manually
-      uses: android-actions/setup-android@v3
-      with:
-        cmdline-tools-version: 8512546 
-
-    - name: Install Android Build Support Tools via SDK Manager
+    - name: Configure Android SDK and NDK Environments Manually
       run: |
-        ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --update
-        ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653"
+        # Use the high-performance SDK pre-installed on the runner directly
+        echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
+        echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
+        
+        # Locate the newest installed NDK version inside the runner image dynamically
+        NDK_PATH=$(ls -d /usr/local/lib/android/sdk/ndk/* | sort -V | tail -n 1)
+        echo "NDK_ROOT=$NDK_PATH" >> $GITHUB_ENV
+        echo "PATH=$NDK_PATH:/usr/local/lib/android/sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
 
     - name: Install Native Host Compiler Utilities
       run: |
@@ -154,7 +155,7 @@ jobs:
     - name: Check and Secure Workspace Asset Baseline
       run: |
         if [ ! -f "baserom.us.z64" ]; then
-          echo "[*] Asset Baseline token missing from repo track. Forging dummy asset file to enable standard asset compilation loop..."
+          echo "[*] Forging dummy asset file to enable standard asset compilation loop..."
           dd if=/dev/zero of=baserom.us.z64 bs=1M count=8
         fi
 
