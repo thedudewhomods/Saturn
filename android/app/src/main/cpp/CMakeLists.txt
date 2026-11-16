@@ -99,6 +99,7 @@ target_compile_definitions(main PRIVATE
     WAPI_SDL2=1
     AAPI_SDL2=1
     CAPI_SDL2=1
+    HAVE_SDL2=1
     USE_GLES=1
     EXTERNAL_DATA=1
     NODRAWINGDISTANCE=1
