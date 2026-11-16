@@ -158,6 +158,7 @@ target_compile_definitions(main PRIVATE
     CAPI_SDL2=1
     HAVE_SDL2=1
     USE_GLES=1
+    IMGUI_IMPL_OPENGL_ES2=1
     EXTERNAL_DATA=1
     NODRAWINGDISTANCE=1
     TEXTURE_FIX=1
