@@ -36,12 +36,6 @@ def main() -> int:
         print("SDL checkout exists but is incomplete: android/SDL/CMakeLists.txt is missing.", file=sys.stderr)
         return 3
 
-    # The project relies on a legally obtained US ROM dump for asset extraction.
-    rom = ROOT / "baserom.us.z64"
-    if not rom.is_file():
-        print("Missing baserom.us.z64. Add your own legally obtained US ROM as the BASEROM_BASE64 GitHub Actions secret.", file=sys.stderr)
-        return 4
-
     assets = ANDROID / "app/src/main/assets"
     assets.mkdir(parents=True, exist_ok=True)
     for folder in ("res", "fonts"):
@@ -53,9 +47,7 @@ def main() -> int:
                 shutil.rmtree(target)
             import shutil
             shutil.copytree(source, target)
-    import shutil
-    shutil.copy2(rom, assets / "sm64.z64")
-    print("Android preflight completed. The APK will extract game data from the packaged ROM on first launch.", flush=True)
+    print("Android preflight completed. The app will request a personal US ROM on first launch.", flush=True)
     return 0
 
 if __name__ == "__main__":
