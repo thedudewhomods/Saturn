@@ -32,6 +32,7 @@ def main() -> int:
     if not SDL.is_dir():
         run(["git", "clone", "--depth", "1", "--branch", "release-2.30.11",
              "https://github.com/libsdl-org/SDL.git", str(SDL)])
+    run(["make", "-C", "tools", "textconv"])
     if not (SDL / "CMakeLists.txt").is_file():
         print("SDL checkout exists but is incomplete: android/SDL/CMakeLists.txt is missing.", file=sys.stderr)
         return 3
