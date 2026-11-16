@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Prepare Saturn's Android build inputs. This does not pretend to compile the game."""
 from __future__ import annotations
-import os
 import pathlib
 import subprocess
 import sys
@@ -43,8 +42,6 @@ def main() -> int:
         print("Missing baserom.us.z64. Add your own legally obtained US ROM as the BASEROM_BASE64 GitHub Actions secret.", file=sys.stderr)
         return 4
 
-    run(["make", "-C", "tools", "-j2"])
-    run([sys.executable, "extract_assets.py", "us"])
     assets = ANDROID / "app/src/main/assets"
     assets.mkdir(parents=True, exist_ok=True)
     for folder in ("res", "fonts"):
@@ -58,7 +55,7 @@ def main() -> int:
             shutil.copytree(source, target)
     import shutil
     shutil.copy2(rom, assets / "sm64.z64")
-    print("Android preflight completed. Native compilation is performed by Gradle/CMake.", flush=True)
+    print("Android preflight completed. The APK will extract game data from the packaged ROM on first launch.", flush=True)
     return 0
 
 if __name__ == "__main__":
