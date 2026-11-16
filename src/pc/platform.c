@@ -150,6 +150,14 @@ const char *sys_user_path(void) {
 
 const char *sys_exe_path(void) {
     static char path[SYS_MAX_PATH] = { 0 };
+#ifdef __ANDROID__
+    const char *internal_path = SDL_AndroidGetInternalStoragePath();
+    if (internal_path && internal_path[0]) {
+        strncpy(path, internal_path, sizeof(path));
+        path[sizeof(path)-1] = 0;
+        return path;
+    }
+#endif
     char *sdlpath = SDL_GetBasePath();
     if (sdlpath && sdlpath[0]) {
         // use the SDL path if it exists
