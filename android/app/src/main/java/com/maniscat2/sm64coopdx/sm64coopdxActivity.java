@@ -46,7 +46,6 @@ public class sm64coopdxActivity extends SDLActivity {
 
         copyAssetTree("res", new File(root, "res"));
         copyAssetTree("fonts", new File(root, "fonts"));
-        copyAssetTree("sm64.z64", new File(root, "sm64.z64"));
 
         if (!marker.createNewFile()) {
             throw new IOException("Could not create resource-copy marker");
