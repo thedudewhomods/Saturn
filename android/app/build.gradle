@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace 'com.maniscat2.sm64coopdx'
-    compileSdk 35
+    compileSdk 34
 
     defaultConfig {
         applicationId 'com.maniscat2.sm64coopdx'
@@ -35,6 +35,7 @@ android {
     sourceSets {
         main {
             java.srcDirs += ['../SDL/android-project/app/src/main/java']
+            res.srcDirs += ['../SDL/android-project/app/src/main/res']
             assets.srcDirs = ['src/main/assets']
             jniLibs.srcDirs = ['src/main/jniLibs']
         }
