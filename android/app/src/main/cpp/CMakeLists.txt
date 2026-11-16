@@ -71,9 +71,37 @@ add_custom_command(
     DEPENDS "${SATURN_ROOT}/levels/level_headers.h.in" "${SATURN_ROOT}/tools/output_level_headers.py"
     VERBATIM)
 
+add_custom_command(
+    OUTPUT "${GENERATED_DIR}/include/text_strings.h"
+    COMMAND "${SATURN_ROOT}/tools/textconv" charmap.txt
+            "${SATURN_ROOT}/include/text_strings.h.in"
+            "${GENERATED_DIR}/include/text_strings.h"
+    WORKING_DIRECTORY "${SATURN_ROOT}"
+    DEPENDS "${SATURN_ROOT}/include/text_strings.h.in" "${SATURN_ROOT}/charmap.txt"
+    VERBATIM)
+add_custom_command(
+    OUTPUT "${GENERATED_DIR}/include/text_menu_strings.h"
+    COMMAND "${SATURN_ROOT}/tools/textconv" charmap_menu.txt
+            "${SATURN_ROOT}/include/text_menu_strings.h.in"
+            "${GENERATED_DIR}/include/text_menu_strings.h"
+    WORKING_DIRECTORY "${SATURN_ROOT}"
+    DEPENDS "${SATURN_ROOT}/include/text_menu_strings.h.in" "${SATURN_ROOT}/charmap_menu.txt"
+    VERBATIM)
+add_custom_command(
+    OUTPUT "${GENERATED_DIR}/include/text_options_strings.h"
+    COMMAND "${SATURN_ROOT}/tools/textconv" charmap.txt
+            "${SATURN_ROOT}/include/text_options_strings.h.in"
+            "${GENERATED_DIR}/include/text_options_strings.h"
+    WORKING_DIRECTORY "${SATURN_ROOT}"
+    DEPENDS "${SATURN_ROOT}/include/text_options_strings.h.in" "${SATURN_ROOT}/charmap.txt"
+    VERBATIM)
+
 add_custom_target(saturn_generated DEPENDS
     "${GENERATED_DIR}/assets/mario_anim_data.c"
-    "${GENERATED_DIR}/include/level_headers.h")
+    "${GENERATED_DIR}/include/level_headers.h"
+    "${GENERATED_DIR}/include/text_strings.h"
+    "${GENERATED_DIR}/include/text_menu_strings.h"
+    "${GENERATED_DIR}/include/text_options_strings.h")
 
 add_library(main SHARED
     ${SATURN_SOURCES}
