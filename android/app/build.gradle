@@ -5,6 +5,7 @@ plugins {
 android {
     namespace 'com.maniscat2.sm64coopdx'
     compileSdk 34
+    ndkVersion '25.2.9519653'
 
     defaultConfig {
         applicationId 'com.maniscat2.sm64coopdx'
