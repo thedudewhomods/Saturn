@@ -7,6 +7,11 @@ import org.libsdl.app.SDLActivity;
 
 public class sm64coopdxActivity extends SDLActivity {
     @Override
+    protected String[] getLibraries() {
+        return new String[] { "SDL2", "main" };
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
