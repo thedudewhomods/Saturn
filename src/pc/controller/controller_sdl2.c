@@ -226,7 +226,9 @@ static void controller_sdl_read(OSContPad *pad) {
     mouse_buttons = mouse;
 #endif
 
-    controller_sdl_read_touch(pad);\n\n    SDL_GameControllerUpdate();
+    controller_sdl_read_touch(pad);
+
+    SDL_GameControllerUpdate();
 
     if (sdl_cntrl != NULL && !SDL_GameControllerGetAttached(sdl_cntrl)) {
         SDL_HapticClose(sdl_haptic);
