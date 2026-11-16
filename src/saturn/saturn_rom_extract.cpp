@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <sstream>
 #include <cmath>
 
 #include "saturn/libs/portable-file-dialogs.h"
