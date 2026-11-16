@@ -32,6 +32,8 @@ file(GLOB_RECURSE SATURN_CXX CONFIGURE_DEPENDS
     "${SATURN_ROOT}/levels/*.cpp")
 
 set(SATURN_SOURCES ${SATURN_C} ${SATURN_CXX})
+# .inc.c files are textually included by their owning actor/level source; they are not translation units.
+list(FILTER SATURN_SOURCES EXCLUDE REGEX "\\.inc\\.c$")
 list(FILTER SATURN_SOURCES EXCLUDE REGEX "/src/game/main\\.c$")
 list(FILTER SATURN_SOURCES EXCLUDE REGEX "gfx_direct3d")
 list(FILTER SATURN_SOURCES EXCLUDE REGEX "gfx_dxgi")
