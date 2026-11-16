@@ -64,7 +64,7 @@ add_custom_command(
 add_custom_command(
     OUTPUT "${GENERATED_DIR}/include/level_headers.h"
     COMMAND /bin/sh -c
-        "${CMAKE_C_COMPILER} -E -P -I '${SATURN_ROOT}' '${SATURN_ROOT}/levels/level_headers.h.in' | python3 '${SATURN_ROOT}/tools/output_level_headers.py' > '${GENERATED_DIR}/include/level_headers.h'"
+        "${CMAKE_C_COMPILER} -E -P -DVERSION_US=1 -D_LANGUAGE_C -I '${SATURN_ROOT}/include' -I '${SATURN_ROOT}' '${SATURN_ROOT}/levels/level_headers.h.in' | python3 '${SATURN_ROOT}/tools/output_level_headers.py' > '${GENERATED_DIR}/include/level_headers.h'"
     WORKING_DIRECTORY "${SATURN_ROOT}"
     DEPENDS "${SATURN_ROOT}/levels/level_headers.h.in" "${SATURN_ROOT}/tools/output_level_headers.py"
     VERBATIM)
@@ -82,6 +82,7 @@ add_dependencies(main saturn_generated)
 target_include_directories(main PRIVATE
     "${SATURN_ROOT}"
     "${SATURN_ROOT}/include"
+    "${CMAKE_CURRENT_LIST_DIR}/sdl2_include"
     "${SATURN_ROOT}/src"
     "${SATURN_ROOT}/lib/src"
     "${SATURN_ROOT}/build"
