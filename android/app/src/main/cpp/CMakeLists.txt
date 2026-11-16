@@ -25,11 +25,17 @@ add_subdirectory("${SDL2_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/SDL2")
 file(GLOB_RECURSE SATURN_C CONFIGURE_DEPENDS
     "${SATURN_ROOT}/src/*.c"
     "${SATURN_ROOT}/actors/*.c"
-    "${SATURN_ROOT}/levels/*.c")
+    "${SATURN_ROOT}/levels/*.c"
+    "${SATURN_ROOT}/bin/*.c"
+    "${SATURN_ROOT}/data/*.c"
+    "${SATURN_ROOT}/assets/*.c")
 file(GLOB_RECURSE SATURN_CXX CONFIGURE_DEPENDS
     "${SATURN_ROOT}/src/*.cpp"
     "${SATURN_ROOT}/actors/*.cpp"
-    "${SATURN_ROOT}/levels/*.cpp")
+    "${SATURN_ROOT}/levels/*.cpp"
+    "${SATURN_ROOT}/bin/*.cpp"
+    "${SATURN_ROOT}/data/*.cpp"
+    "${SATURN_ROOT}/assets/*.cpp")
 
 set(SATURN_SOURCES ${SATURN_C} ${SATURN_CXX})
 # .inc.c files are textually included by their owning actor/level source; they are not translation units.
@@ -55,7 +61,7 @@ set(ULTRA_SOURCES
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 set(GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
-file(MAKE_DIRECTORY "${GENERATED_DIR}/assets" "${GENERATED_DIR}/include")
+file(MAKE_DIRECTORY "${GENERATED_DIR}/assets" "${GENERATED_DIR}/include" "${GENERATED_DIR}/text/us")
 add_custom_command(
     OUTPUT "${GENERATED_DIR}/assets/mario_anim_data.c"
     COMMAND /bin/sh -c
@@ -96,12 +102,29 @@ add_custom_command(
     DEPENDS "${SATURN_ROOT}/include/text_options_strings.h.in" "${SATURN_ROOT}/charmap.txt"
     VERBATIM)
 
+add_custom_command(
+    OUTPUT "${GENERATED_DIR}/text/us/define_text.inc.c"
+    COMMAND /bin/sh -c
+        "${CMAKE_C_COMPILER} -E -P -x c -DVERSION_US=1 -D_LANGUAGE_C -I '${SATURN_ROOT}/text/us' -I '${SATURN_ROOT}' '${SATURN_ROOT}/text/define_text.inc.c' | '${SATURN_ROOT}/tools/textconv' charmap.txt - '${GENERATED_DIR}/text/us/define_text.inc.c'"
+    WORKING_DIRECTORY "${SATURN_ROOT}"
+    DEPENDS "${SATURN_ROOT}/text/define_text.inc.c" "${SATURN_ROOT}/text/us/courses.h" "${SATURN_ROOT}/text/us/dialogs.h" "${SATURN_ROOT}/charmap.txt"
+    VERBATIM)
+add_custom_command(
+    OUTPUT "${GENERATED_DIR}/text/us/define_courses.inc.c"
+    COMMAND /bin/sh -c
+        "${CMAKE_C_COMPILER} -E -P -x c -DVERSION_US=1 -D_LANGUAGE_C -I '${SATURN_ROOT}/text/us' -I '${SATURN_ROOT}' '${SATURN_ROOT}/text/define_courses.inc.c' | '${SATURN_ROOT}/tools/textconv' charmap.txt - '${GENERATED_DIR}/text/us/define_courses.inc.c'"
+    WORKING_DIRECTORY "${SATURN_ROOT}"
+    DEPENDS "${SATURN_ROOT}/text/define_courses.inc.c" "${SATURN_ROOT}/text/us/courses.h" "${SATURN_ROOT}/charmap.txt"
+    VERBATIM)
+
 add_custom_target(saturn_generated DEPENDS
     "${GENERATED_DIR}/assets/mario_anim_data.c"
     "${GENERATED_DIR}/include/level_headers.h"
     "${GENERATED_DIR}/include/text_strings.h"
     "${GENERATED_DIR}/include/text_menu_strings.h"
-    "${GENERATED_DIR}/include/text_options_strings.h")
+    "${GENERATED_DIR}/include/text_options_strings.h"
+    "${GENERATED_DIR}/text/us/define_text.inc.c"
+    "${GENERATED_DIR}/text/us/define_courses.inc.c")
 
 add_library(main SHARED
     ${SATURN_SOURCES}
@@ -118,6 +141,7 @@ target_include_directories(main PRIVATE
     "${SATURN_ROOT}/build"
     "${GENERATED_DIR}"
     "${GENERATED_DIR}/include"
+    "${GENERATED_DIR}/text/us"
     "${SDL2_ROOT}/include")
 
 target_compile_definitions(main PRIVATE
