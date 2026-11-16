@@ -44,7 +44,7 @@ std::map<std::string, FormatTableEntry> format_table = {
 };
 
 #define EXTRACT_PATH std::filesystem::path(sys_user_path()) / "res"
-#define EXTRACT_ROM "sm64.z64"
+#define EXTRACT_ROM (std::filesystem::path(sys_exe_path()) / "sm64.z64")
 #define ROM_SIZE (8 * 1024 * 1024)
 #define ROM_CHECKSUM 0x3CE60709
 
@@ -410,7 +410,7 @@ int saturn_extract_rom(int type) {
         return ROM_INVALID;
     }
     extraction_progress = 0;
-    std::ifstream stream = std::ifstream("sm64.z64", std::ios::binary);
+    std::ifstream stream = std::ifstream(EXTRACT_ROM, std::ios::binary);
     unsigned char* data = (unsigned char*)malloc(1024 * 1024 * 8);
     stream.read((char*)data, 1024 * 1024 * 8);
     stream.close();
