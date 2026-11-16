@@ -148,6 +148,7 @@ target_include_directories(main PRIVATE
 
 target_compile_definitions(main PRIVATE
     VERSION_US=1
+    F3DEX_GBI_2E=1
     _LANGUAGE_C=1
     NON_MATCHING=1
     AVOID_UB=1
