@@ -56,6 +56,8 @@ def main() -> int:
                 shutil.rmtree(target)
             import shutil
             shutil.copytree(source, target)
+    import shutil
+    shutil.copy2(rom, assets / "sm64.z64")
     print("Android preflight completed. Native compilation is performed by Gradle/CMake.", flush=True)
     return 0
 
