@@ -6,7 +6,11 @@
 #include <string>
 #include <cstring>
 #include <iostream>
+#ifdef USE_GLES
+#include <SDL2/SDL_opengles2.h>
+#else
 #include "GL/glew.h"
+#endif
 
 #ifdef _WIN32
 #include <Windows.h>
