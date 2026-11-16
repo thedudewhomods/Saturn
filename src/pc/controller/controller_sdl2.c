@@ -152,6 +152,58 @@ static inline void update_button(const int i, const bool new) {
     if (pressed) last_joybutton = i;
 }
 
+static void controller_sdl_read_touch(OSContPad *pad) {
+    // Android SDL touch coordinates are normalized to [0,1]. Read active fingers
+    // directly from SDL so the virtual controls work with multi-touch.
+    SDL_Window *window = SDL_GetKeyboardFocus();
+    int width = 1, height = 1;
+    if (window) SDL_GetWindowSize(window, &width, &height);
+    if (width < 1) width = 1;
+    if (height < 1) height = 1;
+    float unit = (float)(width < height ? width : height);
+    float xScale = unit / (float)width;
+    float yScale = unit / (float)height;
+
+    int devices = SDL_GetNumTouchDevices();
+    for (int d = 0; d < devices; ++d) {
+        SDL_TouchID touch = SDL_GetTouchDevice(d);
+        int fingers = SDL_GetNumTouchFingers(touch);
+        for (int i = 0; i < fingers; ++i) {
+            SDL_Finger *finger = SDL_GetTouchFinger(touch, i);
+            if (!finger) continue;
+            float x = finger->x;
+            float y = finger->y;
+
+            // Left virtual analog stick: center (19%, 78%), with a circular gate.
+            float dx = (x - 0.19f) / (0.155f * xScale);
+            float dy = (y - 0.78f) / (0.155f * yScale);
+            float magnitude = sqrtf(dx * dx + dy * dy);
+            if (x < 0.45f && magnitude <= 1.35f) {
+                if (magnitude > 0.12f) {
+                    if (magnitude > 1.0f) { dx /= magnitude; dy /= magnitude; }
+                    pad->stick_x = (s8)fmaxf(-127.0f, fminf(127.0f, dx * 127.0f));
+                    pad->stick_y = (s8)fmaxf(-127.0f, fminf(127.0f, -dy * 127.0f));
+                }
+                continue;
+            }
+
+            // Right-side virtual buttons. Coordinates match SaturnTouchOverlay.
+            const float bx[4] = { 0.855f, 0.705f, 0.925f, 0.785f };
+            const float by[4] = { 0.755f, 0.855f, 0.895f, 0.575f };
+            for (int b = 0; b < 4; ++b) {
+                float ddx = (x - bx[b]) / (0.061f * xScale);
+                float ddy = (y - by[b]) / (0.061f * yScale);
+                if (ddx * ddx + ddy * ddy <= 1.7f) {
+                    if (b == 0) pad->button |= A_BUTTON;
+                    if (b == 1) pad->button |= B_BUTTON;
+                    if (b == 2) pad->button |= Z_TRIG;
+                    if (b == 3) pad->button |= START_BUTTON;
+                }
+            }
+        }
+    }
+}
+
 static void controller_sdl_read(OSContPad *pad) {
     if (!init_ok) {
         return;
@@ -174,7 +226,7 @@ static void controller_sdl_read(OSContPad *pad) {
     mouse_buttons = mouse;
 #endif
 
-    SDL_GameControllerUpdate();
+    controller_sdl_read_touch(pad);\n\n    SDL_GameControllerUpdate();
 
     if (sdl_cntrl != NULL && !SDL_GameControllerGetAttached(sdl_cntrl)) {
         SDL_HapticClose(sdl_haptic);
