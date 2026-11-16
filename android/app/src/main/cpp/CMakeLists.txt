@@ -30,6 +30,7 @@ file(GLOB_RECURSE SATURN_CXX CONFIGURE_DEPENDS
     "${SATURN_ROOT}/src/*.cpp"
     "${SATURN_ROOT}/actors/*.cpp"
     "${SATURN_ROOT}/levels/*.cpp")
+file(GLOB SATURN_SOUND_C CONFIGURE_DEPENDS "${SATURN_ROOT}/sound/sound_data.c")
 file(GLOB SATURN_TOP_C CONFIGURE_DEPENDS
     "${SATURN_ROOT}/bin/*.c"
     "${SATURN_ROOT}/data/*.c"
@@ -39,7 +40,7 @@ file(GLOB SATURN_TOP_CXX CONFIGURE_DEPENDS
     "${SATURN_ROOT}/data/*.cpp"
     "${SATURN_ROOT}/assets/*.cpp")
 
-set(SATURN_SOURCES ${SATURN_C} ${SATURN_CXX} ${SATURN_TOP_C} ${SATURN_TOP_CXX})
+set(SATURN_SOURCES ${SATURN_C} ${SATURN_CXX} ${SATURN_TOP_C} ${SATURN_TOP_CXX} ${SATURN_SOUND_C})
 # .inc.c files are textually included by their owning actor/level source; they are not translation units.
 list(FILTER SATURN_SOURCES EXCLUDE REGEX "\\.inc\\.c$")
 list(FILTER SATURN_SOURCES EXCLUDE REGEX "/src/game/main\\.c$")
