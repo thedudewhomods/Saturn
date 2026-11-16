@@ -9,6 +9,10 @@
 #include "fs/fs.h"
 #include "configfile.h"
 
+#ifdef __ANDROID__
+#include <SDL2/SDL_system.h>
+#endif
+
 /* NULL terminated list of platform specific read-only data paths */
 /* priority is top first */
 const char *sys_ropaths[] = {
@@ -116,6 +120,12 @@ static inline bool copy_userdata(const char *userdir) {
 
 const char *sys_user_path(void) {
     static char path[SYS_MAX_PATH] = { 0 };
+#ifdef __ANDROID__
+    // Saturn game data is copied into Android private storage before startup.
+    const char *internal_path = SDL_AndroidGetInternalStoragePath();
+    if (internal_path && internal_path[0])
+        sys_ropaths[0] = internal_path;
+#endif
 
     // get the new pref path from SDL
     char *sdlpath = SDL_GetPrefPath("", "v64saturn");
