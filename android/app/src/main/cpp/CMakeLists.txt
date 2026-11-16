@@ -25,8 +25,7 @@ add_subdirectory("${SDL2_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/SDL2")
 file(GLOB_RECURSE SATURN_C CONFIGURE_DEPENDS
     "${SATURN_ROOT}/src/*.c"
     "${SATURN_ROOT}/actors/*.c"
-    "${SATURN_ROOT}/levels/*.c"
-    "${SATURN_ROOT}/lib/src/*.c")
+    "${SATURN_ROOT}/levels/*.c")
 file(GLOB_RECURSE SATURN_CXX CONFIGURE_DEPENDS
     "${SATURN_ROOT}/src/*.cpp"
     "${SATURN_ROOT}/actors/*.cpp"
@@ -51,12 +50,14 @@ set(ULTRA_SOURCES
     "${SATURN_ROOT}/lib/src/guTranslateF.c"
     "${SATURN_ROOT}/lib/src/ldiv.c")
 
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
 set(GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 file(MAKE_DIRECTORY "${GENERATED_DIR}/assets" "${GENERATED_DIR}/include")
 add_custom_command(
     OUTPUT "${GENERATED_DIR}/assets/mario_anim_data.c"
-    COMMAND ${Python3_EXECUTABLE} "${SATURN_ROOT}/tools/mario_anims_converter.py"
-            > "${GENERATED_DIR}/assets/mario_anim_data.c"
+    COMMAND /bin/sh -c
+        "'${Python3_EXECUTABLE}' '${SATURN_ROOT}/tools/mario_anims_converter.py' > '${GENERATED_DIR}/assets/mario_anim_data.c'"
     WORKING_DIRECTORY "${SATURN_ROOT}"
     DEPENDS "${SATURN_ROOT}/tools/mario_anims_converter.py"
     VERBATIM)
@@ -68,7 +69,6 @@ add_custom_command(
     DEPENDS "${SATURN_ROOT}/levels/level_headers.h.in" "${SATURN_ROOT}/tools/output_level_headers.py"
     VERBATIM)
 
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
 add_custom_target(saturn_generated DEPENDS
     "${GENERATED_DIR}/assets/mario_anim_data.c"
     "${GENERATED_DIR}/include/level_headers.h")
