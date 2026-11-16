@@ -4,7 +4,11 @@
 
 #include <algorithm>
 #include <string>
+#ifdef USE_GLES
+#include <SDL2/SDL_opengles2.h>
+#else
 #include "GL/glew.h"
+#endif
 
 #include "saturn/libs/imgui/imgui.h"
 #include "saturn/libs/imgui/imgui_internal.h"
