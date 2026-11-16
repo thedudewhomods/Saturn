@@ -103,7 +103,8 @@ target_compile_definitions(main PRIVATE
     NODRAWINGDISTANCE=1
     TEXTURE_FIX=1
     EXT_OPTIONS_MENU=1
-    NO_BZERO_BCOPY=1)
+    NO_BZERO_BCOPY=1
+    main=SDL_main)
 
 target_compile_options(main PRIVATE
     -fno-strict-aliasing
