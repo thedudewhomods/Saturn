@@ -44,17 +44,6 @@ jobs:
           "$SDKMANAGER" --install "platforms;android-34" "build-tools;34.0.0" "ndk;25.2.9519653" "cmake;3.22.1"
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653" >> "$GITHUB_ENV"
 
-      - name: Decode personal base ROM
-        env:
-          BASEROM_BASE64: ${{ secrets.BASEROM_BASE64 }}
-        run: |
-          if [ -z "$BASEROM_BASE64" ]; then
-            echo "::error::Set BASEROM_BASE64 to your own legally obtained US ROM dump, base64 encoded."
-            exit 1
-          fi
-          printf '%s' "$BASEROM_BASE64" | base64 --decode > baserom.us.z64
-          test -s baserom.us.z64
-
       - name: Prepare SDL2 and game assets
         run: python3 scripts/port_to_android.py
 
