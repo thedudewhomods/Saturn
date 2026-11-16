@@ -34,8 +34,14 @@ jobs:
       - name: Install Android SDK packages
         run: |
           echo "Android SDK: $ANDROID_HOME"
-          yes | sdkmanager --licenses
-          sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "ndk;25.2.9519653" "cmake;3.22.1"
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)"
+          if [ ! -x "$SDKMANAGER" ]; then
+            echo "::error::sdkmanager was not found under $ANDROID_HOME/cmdline-tools"
+            find "$ANDROID_HOME" -maxdepth 4 -type f -name sdkmanager -print || true
+            exit 1
+          fi
+          yes | "$SDKMANAGER" --licenses
+          "$SDKMANAGER" --install "platforms;android-34" "build-tools;34.0.0" "ndk;25.2.9519653" "cmake;3.22.1"
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653" >> "$GITHUB_ENV"
 
       - name: Decode personal base ROM
