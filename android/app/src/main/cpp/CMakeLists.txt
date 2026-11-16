@@ -45,6 +45,7 @@ list(FILTER SATURN_SOURCES EXCLUDE REGEX "\\.inc\\.c$")
 list(FILTER SATURN_SOURCES EXCLUDE REGEX "/src/game/main\\.c$")
 list(FILTER SATURN_SOURCES EXCLUDE REGEX "gfx_direct3d")
 list(FILTER SATURN_SOURCES EXCLUDE REGEX "gfx_dxgi")
+list(FILTER SATURN_SOURCES EXCLUDE REGEX "imgui_impl_opengl2\\.cpp$")
 list(FILTER SATURN_SOURCES EXCLUDE REGEX "/discord/")
 list(FILTER SATURN_SOURCES EXCLUDE REGEX "/src/pc/gfx/gfx_opengl_legacy\\.c$")
 
