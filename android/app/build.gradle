@@ -1,0 +1,59 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.maniscat2.sm64coopdx'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.maniscat2.sm64coopdx'
+        minSdk 24
+        targetSdk 28
+        versionCode 1
+        versionName '0.1.0'
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+        externalNativeBuild {
+            cmake {
+                cppFlags '-std=c++17'
+                arguments '-DANDROID_STL=c++_shared'
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+        }
+        release {
+            minifyEnabled false
+        }
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs += ['../SDL/android-project/app/src/main/java']
+            assets.srcDirs = ['src/main/assets']
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path 'src/main/cpp/CMakeLists.txt'
+            version '3.22.1'
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.annotation:annotation:1.7.1'
+}
